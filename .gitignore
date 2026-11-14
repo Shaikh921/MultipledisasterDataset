@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Environment & Secrets
+.env
+*.key
+*.token
+
+# Local storage & caches
+.cache/
+data_ingestion_storage/
+
+# Heavy datasets and raw archives (strictly excluded from deployment branch)
+AAPADAMITRA_DATA/
+*.parquet
+*.geojson
+*.csv
+*.zip
+*.tif
+*.tiff
+*.tar.gz
+
+# Other model directories (unapproved for production deployment)
+improved_cyclone_model/
+improved_flood_model/
+improved_landslide_model/
+improved_tsunami_model/
+models/training/flood/
+models/training/landslide/
+models/training/tsunami/
+
+# Virtual environments
+venv/
+.venv/
+env/

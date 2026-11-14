@@ -1,0 +1,21 @@
+# Render Blueprint for AAPADAMITRA Zero-Cost Model API
+# Strictly utilizes Render Free Web Service (₹0 budget, 512 MB RAM limit)
+services:
+  - type: web
+    name: aapadamitra-model-api
+    runtime: python
+    plan: free
+    region: singapore
+    buildCommand: pip install -r deployment/requirements.txt
+    startCommand: uvicorn deployment.api.main:app --host 0.0.0.0 --port $PORT --workers 1
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: ENVIRONMENT
+        value: production
+      - key: MODEL_DIR
+        value: models/training/cyclone/artifacts
+      - key: API_KEY
+        generateValue: true
