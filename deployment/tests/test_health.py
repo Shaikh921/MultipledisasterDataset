@@ -1,5 +1,6 @@
 """
 Unit tests for AAPADAMITRA API Health, Resource Monitoring and Model Registry endpoints.
+Verifies multi-hazard demonstration mode status and memory limits.
 """
 
 from deployment.api.config import settings
@@ -20,6 +21,10 @@ def test_health_endpoint(client):
     assert data["memory_limit_mb"] == 512.0
     assert 0.0 <= data["memory_usage_pct"] <= 100.0
     assert data["cyclone_model_loaded"] is True
+    assert data["flood_model_loaded"] is True
+    assert data["landslide_model_loaded"] is True
+    assert data["tsunami_model_loaded"] is True
+    assert data["demo_mode"] is True
     assert data["model_version"] == "v3.0"
     assert data["active_hazard"] == "cyclone"
 
@@ -28,38 +33,51 @@ def test_models_registry_status(client):
     """
     Verifies that /models clearly delineates:
     - Cyclone: ACTIVE (Promoted to Production)
-    - Flood: NOT PROMOTED
-    - Landslide: NOT PROMOTED
-    - Tsunami: NOT PROMOTED
+    - Flood: NOT PROMOTED (Demonstration Mode Active)
+    - Landslide: NOT PROMOTED (Demonstration Mode Active)
+    - Tsunami: NOT PROMOTED (Demonstration Mode Active)
     """
     response = client.get("/models")
     assert response.status_code == 200
     data = response.json()
 
     assert data["active_hazard_count"] == 1
+    assert data["demonstration_hazard_count"] == 4
     assert data["total_hazards"] == 4
     models = data["models"]
 
-    # Cyclone must be ACTIVE
+    # Cyclone must be PRODUCTION PROMOTED
     assert models["cyclone"]["is_active"] is True
+    assert models["cyclone"]["demo_enabled"] is True
+    assert models["cyclone"]["demo_status"] == "PRODUCTION_APPROVED"
     assert models["cyclone"]["production_status"] == "PROMOTED TO PRODUCTION"
     assert "/api/v1/cyclone/predict" in models["cyclone"]["available_endpoints"]
+    assert "/api/v1/cyclone/model-info" in models["cyclone"]["available_endpoints"]
 
-    # Flood must NOT be promoted
+    # Flood must NOT be promoted (Demonstration Only)
     assert models["flood"]["is_active"] is False
+    assert models["flood"]["demo_enabled"] is True
+    assert models["flood"]["demo_status"] == "DEMONSTRATION_ONLY"
     assert models["flood"]["production_status"] == "NOT PROMOTED"
-    assert len(models["flood"]["available_endpoints"]) == 0
+    assert "/api/v1/flood/predict" in models["flood"]["available_endpoints"]
+    assert "/api/v1/flood/model-info" in models["flood"]["available_endpoints"]
     assert "persistence" in models["flood"]["promotion_rationale"].lower()
 
-    # Landslide must NOT be promoted
+    # Landslide must NOT be promoted (Demonstration Only)
     assert models["landslide"]["is_active"] is False
+    assert models["landslide"]["demo_enabled"] is True
+    assert models["landslide"]["demo_status"] == "DEMONSTRATION_ONLY"
     assert models["landslide"]["production_status"] == "NOT PROMOTED"
-    assert len(models["landslide"]["available_endpoints"]) == 0
+    assert "/api/v1/landslide/predict" in models["landslide"]["available_endpoints"]
+    assert "/api/v1/landslide/model-info" in models["landslide"]["available_endpoints"]
 
-    # Tsunami must NOT be promoted
+    # Tsunami must NOT be promoted (Demonstration Only)
     assert models["tsunami"]["is_active"] is False
+    assert models["tsunami"]["demo_enabled"] is True
+    assert models["tsunami"]["demo_status"] == "DEMONSTRATION_ONLY"
     assert models["tsunami"]["production_status"] == "NOT PROMOTED"
-    assert len(models["tsunami"]["available_endpoints"]) == 0
+    assert "/api/v1/tsunami/predict" in models["tsunami"]["available_endpoints"]
+    assert "/api/v1/tsunami/model-info" in models["tsunami"]["available_endpoints"]
 
 
 def test_cyclone_model_info(client):

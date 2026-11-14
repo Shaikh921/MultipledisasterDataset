@@ -25,6 +25,13 @@ class Settings(BaseSettings):
 
     # Local Model Storage (Committed directly to repository)
     MODEL_DIR: str = "models/training/cyclone/artifacts"
+    CYCLONE_MODEL_DIR: str = "models/training/cyclone/artifacts"
+    FLOOD_MODEL_DIR: str = "models/training/flood/artifacts"
+    LANDSLIDE_MODEL_DIR: str = "models/training/landslide/artifacts"
+    TSUNAMI_MODEL_DIR: str = "models/training/tsunami/artifacts"
+
+    # Multi-Hazard Demonstration Mode
+    DEMO_MODE: bool = True
 
     # Operational Limits & Constraints (Render Free Tier: 512 MB)
     MAX_MEMORY_RSS_MB: float = 512.0
@@ -39,10 +46,19 @@ class Settings(BaseSettings):
 
     @property
     def resolved_model_dir(self) -> Path:
-        """Resolves local model artifact directory."""
+        """Resolves local cyclone model artifact directory (retained for backward compatibility)."""
+        return self.resolved_cyclone_model_dir
+
+    @property
+    def resolved_cyclone_model_dir(self) -> Path:
+        """Resolves local cyclone model artifact directory."""
         configured = Path(self.MODEL_DIR)
         if configured.exists() and configured.is_dir():
             return configured
+
+        alt_configured = Path(self.CYCLONE_MODEL_DIR)
+        if alt_configured.exists() and alt_configured.is_dir():
+            return alt_configured
 
         # Fallback paths within the repository
         candidates = [
@@ -54,6 +70,51 @@ class Settings(BaseSettings):
             if candidate.exists() and candidate.is_dir():
                 return candidate
 
+        return configured
+
+    @property
+    def resolved_flood_model_dir(self) -> Path:
+        """Resolves local flood model artifact directory."""
+        configured = Path(self.FLOOD_MODEL_DIR)
+        if configured.exists() and configured.is_dir():
+            return configured
+        candidates = [
+            Path("models/training/flood/artifacts"),
+            Path("deployment/models/training/flood/artifacts"),
+        ]
+        for candidate in candidates:
+            if candidate.exists() and candidate.is_dir():
+                return candidate
+        return configured
+
+    @property
+    def resolved_landslide_model_dir(self) -> Path:
+        """Resolves local landslide model artifact directory."""
+        configured = Path(self.LANDSLIDE_MODEL_DIR)
+        if configured.exists() and configured.is_dir():
+            return configured
+        candidates = [
+            Path("models/training/landslide/artifacts"),
+            Path("deployment/models/training/landslide/artifacts"),
+        ]
+        for candidate in candidates:
+            if candidate.exists() and candidate.is_dir():
+                return candidate
+        return configured
+
+    @property
+    def resolved_tsunami_model_dir(self) -> Path:
+        """Resolves local tsunami model artifact directory."""
+        configured = Path(self.TSUNAMI_MODEL_DIR)
+        if configured.exists() and configured.is_dir():
+            return configured
+        candidates = [
+            Path("models/training/tsunami/artifacts"),
+            Path("deployment/models/training/tsunami/artifacts"),
+        ]
+        for candidate in candidates:
+            if candidate.exists() and candidate.is_dir():
+                return candidate
         return configured
 
 

@@ -35,15 +35,36 @@ def test_model_bundle_loading():
 def test_artifact_sha256_checksums():
     """
     Verifies that loaded model artifacts strictly match the exact cryptographic
-    SHA256 digests established during Phase 3 standardized training.
+    SHA256 digests established during Phase 3 standardized training across all 4 hazards.
     """
-    bundle = model_loader.get_bundle()
-    for filename, expected_digest in EXPECTED_CHECKSUMS.items():
-        actual_digest = bundle.checksums.get(filename)
-        assert actual_digest is not None, f"Missing checksum for {filename}"
-        assert actual_digest == expected_digest, (
-            f"Checksum mismatch for {filename}: {actual_digest} != {expected_digest}"
-        )
+    # 1. Cyclone artifacts
+    cyclone_bundle = model_loader.get_bundle()
+    for filename in REQUIRED_ARTIFACTS:
+        actual_digest = cyclone_bundle.checksums.get(filename)
+        expected_digest = EXPECTED_CHECKSUMS[filename]
+        assert actual_digest == expected_digest, f"Checksum mismatch for {filename}"
+
+    # 2. Flood artifact
+    flood_bundle = model_loader.get_flood_bundle()
+    assert flood_bundle.checksums["flood_discharge_rf_v3.joblib"] == EXPECTED_CHECKSUMS["flood_discharge_rf_v3.joblib"]
+
+    # 3. Landslide artifact
+    landslide_bundle = model_loader.get_landslide_bundle()
+    assert landslide_bundle.checksums["landslide_calibrated_rf_v3.joblib"] == EXPECTED_CHECKSUMS["landslide_calibrated_rf_v3.joblib"]
+
+    # 4. Tsunami artifacts
+    tsunami_bundle = model_loader.get_tsunami_bundle()
+    assert tsunami_bundle.checksums["tsunami_classifier_rf_v3.joblib"] == EXPECTED_CHECKSUMS["tsunami_classifier_rf_v3.joblib"]
+    assert tsunami_bundle.checksums["tsunami_scaler_v3.joblib"] == EXPECTED_CHECKSUMS["tsunami_scaler_v3.joblib"]
+
+
+def test_load_all_models():
+    """Verifies that load_all_models initializes all 4 hazard model bundles."""
+    bundles = model_loader.load_all_models()
+    assert set(bundles.keys()) == {"cyclone", "flood", "landslide", "tsunami"}
+    for hazard, b in bundles.items():
+        assert b is not None, f"Bundle for {hazard} was not loaded"
+        assert b.is_ready is True, f"Bundle for {hazard} is not ready"
 
 
 def test_resolved_model_dir():
